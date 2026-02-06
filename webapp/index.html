@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JO11-5">
+<title>JO11-5 Wedstrijddag</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a1a;
+  --surface: #252525;
+  --surface-alt: #2f2f2f;
+  --text: #f0f0f0;
+  --text-muted: #999;
+  --orange: #f26522;
+  --orange-dim: #c4510f;
+  --green-field: #2d6a2d;
+  --green-light: #3a8a3a;
+  --white: #ffffff;
+  --border: #444;
+  --tab-bg: #111;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+}
+
+/* Tab content */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: var(--tab-bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+}
+
+.tab-bar button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-family: inherit;
+  padding: 8px 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tab-bar button.active {
+  color: var(--orange);
+}
+
+.tab-bar button svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* ====== TAB 1: KLOK ====== */
+.clock-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  gap: 20px;
+}
+
+.period-indicator {
+  font-size: 16px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.period-indicator span {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.clock-display {
+  font-size: 96px;
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  transition: color 0.5s;
+  line-height: 1;
+}
+
+.clock-display.warning {
+  color: var(--orange);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.clock-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.btn {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: var(--white);
+}
+
+.btn-secondary {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.rust-banner {
+  display: none;
+  background: var(--orange-dim);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.rust-banner.visible {
+  display: block;
+}
+
+.halftime-label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ====== TAB 2: OPSTELLING ====== */
+.formation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.formation-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.formation-period-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.period-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-btn.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--white);
+}
+
+.field-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  aspect-ratio: 3 / 4;
+  background: var(--green-field);
+  border-radius: 12px;
+  border: 2px solid var(--green-light);
+  overflow: hidden;
+}
+
+/* Field markings */
+.field-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.field-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.field-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.field-row.row-voor { top: 8%; }
+.field-row.row-midden { top: 35%; }
+.field-row.row-achter { top: 62%; }
+.field-row.row-keeper { top: 85%; }
+
+.player-badge {
+  background: rgba(0,0,0,0.55);
+  color: var(--white);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 70px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.player-badge.keeper {
+  background: rgba(242, 101, 34, 0.7);
+}
+
+.player-badge small {
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.subs-container {
+  max-width: 400px;
+  margin: 12px auto 0;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.subs-container h3 {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.subs-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sub-badge {
+  background: var(--surface-alt);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auto-sync-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+/* ====== TAB 3: CHECKLIST ====== */
+.checklist-section {
+  margin-bottom: 24px;
+}
+
+.checklist-section h3 {
+  font-size: 14px;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
+}
+
+.check-box {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.checklist-item.checked .check-box {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+
+.check-box svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--white);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.checklist-item.checked .check-box svg {
+  opacity: 1;
+}
+
+.check-label {
+  font-size: 16px;
+  line-height: 1.3;
+  transition: opacity 0.2s;
+}
+
+.checklist-item.checked .check-label {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.checklist-reset {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.checklist-reset button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ====== TAB 4: REGELS ====== */
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rule-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--orange);
+}
+
+.rule-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rule-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.rules-header {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TAB 1: KLOK -->
+  <div class="tab-content active" id="tab-klok">
+    <div class="clock-page">
+      <div class="period-indicator">
+        <span id="half-label">1e helft</span> &mdash; <span id="quarter-label">1e kwart</span>
+      </div>
+      <div class="clock-display" id="clock-display">00:00</div>
+      <div class="rust-banner" id="rust-banner">Rust</div>
+      <div class="clock-buttons">
+        <button class="btn btn-primary" id="btn-startstop">Start</button>
+        <button class="btn btn-secondary" id="btn-next">Volgende periode</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: OPSTELLING -->
+  <div class="tab-content" id="tab-opstelling">
+    <div class="formation-header">
+      <h2>Opstelling</h2>
+      <div class="formation-period-nav" id="period-nav"></div>
+    </div>
+    <div class="field-container" id="field">
+      <div class="field-row row-voor" id="row-voor"></div>
+      <div class="field-row row-midden" id="row-midden"></div>
+      <div class="field-row row-achter" id="row-achter"></div>
+      <div class="field-row row-keeper" id="row-keeper"></div>
+    </div>
+    <div class="subs-container">
+      <h3>Wissels</h3>
+      <div class="subs-list" id="subs-list"></div>
+    </div>
+    <div class="auto-sync-note" id="sync-note"></div>
+  </div>
+
+  <!-- TAB 3: CHECKLIST -->
+  <div class="tab-content" id="tab-checklist">
+    <div id="checklist-container"></div>
+    <div class="checklist-reset">
+      <button id="btn-reset-checklist">Reset checklist</button>
+    </div>
+  </div>
+
+  <!-- TAB 4: REGELS -->
+  <div class="tab-content" id="tab-regels">
+    <h2 class="rules-header">Spelregels 8v8</h2>
+    <div class="rules-list" id="rules-list"></div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar" id="tab-bar">
+    <button class="active" data-tab="tab-klok">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+      Klok
+    </button>
+    <button data-tab="tab-opstelling">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      Opstelling
+    </button>
+    <button data-tab="tab-checklist">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      Checklist
+    </button>
+    <button data-tab="tab-regels">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      Regels
+    </button>
+  </nav>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const formations = [
+  {
+    keeper: ['Ismail'],
+    achter: ['Abdelali', 'Aryan', 'Michael'],
+    midden: ['Elias'],
+    voor: ['Ensar', 'Danil', 'Tenzin'],
+    wissel: ['Mingus', 'Sabir', 'Menos']
+  },
+  {
+    keeper: ['Ismail'],
+    achter: ['Abdelali', 'Mingus', 'Michael'],
+    midden: ['Sabir'],
+    voor: ['Ensar', 'Danil', 'Menos'],
+    wissel: ['Aryan', 'Elias', 'Tenzin']
+  },
+  {
+    keeper: ['Ismail'],
+    achter: ['Abdelali', 'Mingus', 'Aryan'],
+    midden: ['Sabir'],
+    voor: ['Elias', 'Tenzin', 'Menos'],
+    wissel: ['Ensar', 'Michael', 'Danil']
+  },
+  {
+    keeper: ['Ismail'],
+    achter: ['Michael', 'Mingus', 'Aryan'],
+    midden: ['Sabir'],
+    voor: ['Elias', 'Ensar', 'Danil'],
+    wissel: ['Abdelali', 'Menos', 'Tenzin']
+  }
+];
+
+const checklistData = [
+  {
+    title: 'Voor de wedstrijd',
+    items: [
+      'Warming-up gedaan',
+      'Kennisgemaakt met coach tegenstander',
+      'Kennisgemaakt met scheidsrechter',
+      'Korte voorbespreking met spelers',
+      'Begroeting met boks (spelers + scheids)',
+      'Opstelling 1e periode doorgegeven'
+    ]
+  },
+  {
+    title: 'Tijdens de wedstrijd',
+    items: [
+      'Sta aan juiste zijde (tegenover ouders)',
+      'Time-out 1e kwart gehouden',
+      'Gewisseld na 1e kwart',
+      'Time-out 2e kwart gehouden',
+      'Rust \u2014 drinken en bespreken',
+      'Time-out 3e kwart gehouden',
+      'Gewisseld na 3e kwart',
+      'Time-out 4e kwart gehouden'
+    ]
+  },
+  {
+    title: 'Na de wedstrijd',
+    items: [
+      'Penalty\u2019s laten nemen',
+      'Tegenstander, coach en scheids bedankt (boks)',
+      'Kort teruggeblikt met spelers',
+      'Positief afgesloten'
+    ]
+  }
+];
+
+const rulesData = [
+  { title: 'Geen buitenspel', desc: 'Buitenspel wordt niet gefloten bij 8v8.' },
+  { title: 'Uitbal = indribbelen', desc: 'Niet ingooien, niet passen. De bal moet het veld ingedribbeld worden.' },
+  { title: 'Hoekschop', desc: 'Indribbelen, inpassen of inschieten \u2014 alle drie mag.' },
+  { title: 'Achterbal', desc: 'Vanaf de grond in het keepersgebied.' },
+  { title: 'Vrije bal = altijd direct', desc: 'Vrije ballen zijn altijd direct, er hoeft niet eerst aangespeeld te worden.' },
+  { title: 'Terugspeelbal', desc: 'De keeper mag de bal niet oppakken na een terugspeelbal.' },
+  { title: 'Strafschop', desc: 'Alleen bij het ontnemen van een duidelijke scoringskans in het keepersgebied.' },
+  { title: 'Afstand bij hervatting', desc: 'Tegenstander moet altijd 5 meter afstand houden bij spelhervatting.' },
+  { title: 'Time-out', desc: 'Halverwege elke helft, maximaal 2 minuten.' }
+];
+
+// ============================================================
+// KLOK
+// ============================================================
+let timerSeconds = 0;
+let timerRunning = false;
+let timerInterval = null;
+let currentPeriod = 0; // 0-3
+let hasVibrated = false;
+
+const clockDisplay = document.getElementById('clock-display');
+const btnStartStop = document.getElementById('btn-startstop');
+const btnNext = document.getElementById('btn-next');
+const halfLabel = document.getElementById('half-label');
+const quarterLabel = document.getElementById('quarter-label');
+const rustBanner = document.getElementById('rust-banner');
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateClockDisplay() {
+  clockDisplay.textContent = formatTime(timerSeconds);
+
+  // Warning at 12-13 minutes
+  const minutes = timerSeconds / 60;
+  if (minutes >= 12 && minutes < 14) {
+    clockDisplay.classList.add('warning');
+    if (!hasVibrated && navigator.vibrate) {
+      navigator.vibrate([300, 100, 300]);
+      hasVibrated = true;
+    }
+  } else {
+    clockDisplay.classList.remove('warning');
+  }
+}
+
+function updatePeriodLabels() {
+  const halfText = currentPeriod < 2 ? '1e helft' : '2e helft';
+  const quarterText = (currentPeriod + 1) + 'e kwart';
+  halfLabel.textContent = halfText;
+  quarterLabel.textContent = quarterText;
+  rustBanner.classList.toggle('visible', false);
+}
+
+function startTimer() {
+  timerRunning = true;
+  btnStartStop.textContent = 'Pauze';
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    updateClockDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  timerRunning = false;
+  btnStartStop.textContent = 'Start';
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+btnStartStop.addEventListener('click', () => {
+  if (timerRunning) {
+    stopTimer();
+  } else {
+    rustBanner.classList.remove('visible');
+    startTimer();
+  }
+});
+
+btnNext.addEventListener('click', () => {
+  stopTimer();
+  timerSeconds = 0;
+  hasVibrated = false;
+  updateClockDisplay();
+  clockDisplay.classList.remove('warning');
+
+  if (currentPeriod < 3) {
+    currentPeriod++;
+    updatePeriodLabels();
+
+    // Show rust banner after 2nd period
+    if (currentPeriod === 2) {
+      rustBanner.classList.add('visible');
+    }
+
+    // Sync formation view
+    renderFormation(currentPeriod);
+    updatePeriodNav();
+  }
+});
+
+updatePeriodLabels();
+updateClockDisplay();
+
+// ============================================================
+// OPSTELLING
+// ============================================================
+let selectedPeriod = 0;
+
+function createBadge(name, role) {
+  const div = document.createElement('div');
+  div.className = 'player-badge' + (role === 'K' ? ' keeper' : '');
+  div.innerHTML = (role ? '<small>' + role + '</small>' : '') + name;
+  return div;
+}
+
+function renderFormation(period) {
+  selectedPeriod = period;
+  const f = formations[period];
+
+  const rowVoor = document.getElementById('row-voor');
+  const rowMidden = document.getElementById('row-midden');
+  const rowAchter = document.getElementById('row-achter');
+  const rowKeeper = document.getElementById('row-keeper');
+  const subsList = document.getElementById('subs-list');
+
+  rowVoor.innerHTML = '';
+  rowMidden.innerHTML = '';
+  rowAchter.innerHTML = '';
+  rowKeeper.innerHTML = '';
+  subsList.innerHTML = '';
+
+  f.voor.forEach(n => rowVoor.appendChild(createBadge(n, 'V')));
+  f.midden.forEach(n => rowMidden.appendChild(createBadge(n, 'M')));
+  f.achter.forEach(n => rowAchter.appendChild(createBadge(n, 'A')));
+  f.keeper.forEach(n => rowKeeper.appendChild(createBadge(n, 'K')));
+  f.wissel.forEach(n => {
+    const span = document.createElement('span');
+    span.className = 'sub-badge';
+    span.textContent = n;
+    subsList.appendChild(span);
+  });
+
+  const syncNote = document.getElementById('sync-note');
+  if (timerRunning) {
+    syncNote.textContent = 'Volgt actieve periode van klok';
+  } else {
+    syncNote.textContent = '';
+  }
+}
+
+function updatePeriodNav() {
+  const nav = document.getElementById('period-nav');
+  nav.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'period-btn' + (i === selectedPeriod ? ' active' : '');
+    btn.textContent = i + 1;
+    btn.addEventListener('click', () => {
+      renderFormation(i);
+      updatePeriodNav();
+    });
+    nav.appendChild(btn);
+  }
+}
+
+renderFormation(0);
+updatePeriodNav();
+
+// Swipe support on field
+let touchStartX = 0;
+const fieldEl = document.getElementById('field');
+fieldEl.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].clientX;
+}, { passive: true });
+fieldEl.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) {
+    let next = selectedPeriod + (dx < 0 ? 1 : -1);
+    if (next >= 0 && next <= 3) {
+      renderFormation(next);
+      updatePeriodNav();
+    }
+  }
+}, { passive: true });
+
+// ============================================================
+// CHECKLIST
+// ============================================================
+const STORAGE_KEY = 'jo11-5-checklist';
+
+function loadChecked() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch { return {}; }
+}
+
+function saveChecked(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function renderChecklist() {
+  const container = document.getElementById('checklist-container');
+  container.innerHTML = '';
+  const state = loadChecked();
+
+  checklistData.forEach((section, si) => {
+    const sectionDiv = document.createElement('div');
+    sectionDiv.className = 'checklist-section';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = section.title;
+    sectionDiv.appendChild(h3);
+
+    section.items.forEach((item, ii) => {
+      const key = si + '-' + ii;
+      const row = document.createElement('div');
+      row.className = 'checklist-item' + (state[key] ? ' checked' : '');
+
+      row.innerHTML =
+        '<div class="check-box"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>' +
+        '<span class="check-label">' + item + '</span>';
+
+      row.addEventListener('click', () => {
+        const s = loadChecked();
+        if (s[key]) { delete s[key]; } else { s[key] = true; }
+        saveChecked(s);
+        row.classList.toggle('checked');
+      });
+
+      sectionDiv.appendChild(row);
+    });
+
+    container.appendChild(sectionDiv);
+  });
+}
+
+document.getElementById('btn-reset-checklist').addEventListener('click', () => {
+  if (confirm('Checklist resetten?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderChecklist();
+  }
+});
+
+renderChecklist();
+
+// ============================================================
+// REGELS
+// ============================================================
+function renderRules() {
+  const list = document.getElementById('rules-list');
+  rulesData.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'rule-card';
+    card.innerHTML = '<h3>' + r.title + '</h3><p>' + r.desc + '</p>';
+    list.appendChild(card);
+  });
+}
+
+renderRules();
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+const tabBar = document.getElementById('tab-bar');
+const tabButtons = tabBar.querySelectorAll('button');
+
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+
+    // Deactivate all
+    tabButtons.forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+    // Activate
+    btn.classList.add('active');
+    document.getElementById(target).classList.add('active');
+
+    // Sync formation to current period when switching to opstelling
+    if (target === 'tab-opstelling' && timerRunning) {
+      renderFormation(currentPeriod);
+      updatePeriodNav();
+    }
+  });
+});
+</script>
+</body>
+</html>
